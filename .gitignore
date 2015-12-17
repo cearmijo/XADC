@@ -7,6 +7,9 @@
 # Don't ignore directories
 !**/
 
+# Get the archive file
+!**/*.txt
+
 # Especially don't ignore the .srcs directories inside vivado projects
 !**/*.srcs/**
 
