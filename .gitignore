@@ -7,12 +7,15 @@
 # Don't ignore directories
 !**/
 
+# Get the archive file
+!**/*.txt
+
 # Especially don't ignore the .srcs directories inside vivado projects
 !**/*.srcs/**
 
 # Except do ignore the log files contained the .srcs directories
-*.upgrade_log
-*.log
+#*.upgrade_log
+#*.log
 
 # Don't ignore vivado project files
 !*.xpr
@@ -37,6 +40,3 @@
 !**/*.sdk/udp_regs/.project
 !**/*.sdk/udp_regs/.cproject
 !**/*.sdk/udp_regs/src/**
-
-
-

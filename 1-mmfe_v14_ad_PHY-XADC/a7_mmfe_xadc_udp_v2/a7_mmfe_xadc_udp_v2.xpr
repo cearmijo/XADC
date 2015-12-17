@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2014 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="2" Path="C:/Users/carmijo/Documents/XADC/1-mmfe_v14_ad_PHY-XADC/a7_mmfe_xadc_udp_v2/a7_mmfe_xadc_udp_v2.xpr">
+<Project Version="7" Minor="2" Path="C:/Users/carmijo/Documents/1-mmfe_v14_ad_PHY/a7_mmfe_xadc_udp_v2/a7_mmfe_xadc_udp_v2.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="f94ea87823a44aed99449cb0483ef1ae"/>
@@ -41,28 +41,28 @@
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_axi_ethernet_0_0/mbsys_axi_ethernet_0_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_axi_ethernet_0_fifo_0/mbsys_axi_ethernet_0_fifo_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hdl/mbsys.vhd"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_xadc_wiz_0_0/mbsys_xadc_wiz_0_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hw_handoff/mbsys_bd.tcl"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hw_handoff/mbsys.hwh"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_axi_intc_0/mbsys_microblaze_0_axi_intc_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_axi_periph_0/mbsys_microblaze_0_axi_periph_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_lmb_bram_0/mbsys_lmb_bram_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_dlmb_bram_if_cntlr_0/mbsys_dlmb_bram_if_cntlr_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_ilmb_v10_0/mbsys_ilmb_v10_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_dlmb_v10_0/mbsys_dlmb_v10_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_ilmb_bram_if_cntlr_0/mbsys_ilmb_bram_if_cntlr_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_0/mbsys_microblaze_0_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="mbsys_ooc.xdc"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="mbsys.bmm"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_xadc_wiz_0_0/mbsys_xadc_wiz_0_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hdl/mbsys.vhd"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_axi_ethernet_0_0/mbsys_axi_ethernet_0_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hw_handoff/mbsys_bd.tcl"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="hw_handoff/mbsys.hwh"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_xbar_0/mbsys_xbar_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_axi_timer_0_0/mbsys_axi_timer_0_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_rst_clk_wiz_1_100M_0/mbsys_rst_clk_wiz_1_100M_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_clk_wiz_1_0/mbsys_clk_wiz_1_0.xci"/>
+        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_axi_ethernet_0_fifo_0/mbsys_axi_ethernet_0_fifo_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_mdm_1_0/mbsys_mdm_1_0.xci"/>
         <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_xlconcat_0/mbsys_microblaze_0_xlconcat_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_axi_intc_0/mbsys_microblaze_0_axi_intc_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_axi_periph_0/mbsys_microblaze_0_axi_periph_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_lmb_bram_0/mbsys_lmb_bram_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_ilmb_bram_if_cntlr_0/mbsys_ilmb_bram_if_cntlr_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_dlmb_bram_if_cntlr_0/mbsys_dlmb_bram_if_cntlr_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_ilmb_v10_0/mbsys_ilmb_v10_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_dlmb_v10_0/mbsys_dlmb_v10_0.xci"/>
-        <CompFileExtendedInfo CompFileName="mbsys.bd" FileRelPathName="ip/mbsys_microblaze_0_0/mbsys_microblaze_0_0.xci"/>
       </File>
       <File Path="$PSRCDIR/sources_1/new/external_trigger.vhd">
         <FileInfo>
