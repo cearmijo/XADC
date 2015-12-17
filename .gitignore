@@ -1,0 +1,42 @@
+# Ignore all
+*
+# Add exceptions
+# Don't ignore the .gitignore file
+!.gitignore
+
+# Don't ignore directories
+!**/
+
+# Especially don't ignore the .srcs directories inside vivado projects
+!**/*.srcs/**
+
+# Except do ignore the log files contained the .srcs directories
+*.upgrade_log
+*.log
+
+# Don't ignore vivado project files
+!*.xpr
+
+# SDK specific 
+# Hardware platform
+!**/*.sdk/toplevel_hw_platform_0/system.xml
+!**/*.sdk/toplevel_hw_platform_0/*.bit
+!**/*.sdk/toplevel_hw_platform_0/*.bmm
+!**/*.sdk/toplevel_hw_platform_0/.project
+
+# Board Support Package
+!**/*.sdk/toplevel_bsp_0/system.mss
+!**/*.sdk/toplevel_bsp_0/libgen.options
+!**/*.sdk/toplevel_bsp_0/Makefile
+!**/*.sdk/toplevel_bsp_0/.project
+!**/*.sdk/toplevel_bsp_0/.sdkproject
+!**/*.sdk/toplevel_bsp_0/.cproject
+
+# source files for udp_regs do not save makefiles
+!**/*.sdk/udp_regs/Debug/src/
+!**/*.sdk/udp_regs/.project
+!**/*.sdk/udp_regs/.cproject
+!**/*.sdk/udp_regs/src/**
+
+
+
