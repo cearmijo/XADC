@@ -11,8 +11,8 @@
 !**/*.srcs/**
 
 # Except do ignore the log files contained the .srcs directories
-*.upgrade_log
-*.log
+#*.upgrade_log
+#*.log
 
 # Don't ignore vivado project files
 !*.xpr
