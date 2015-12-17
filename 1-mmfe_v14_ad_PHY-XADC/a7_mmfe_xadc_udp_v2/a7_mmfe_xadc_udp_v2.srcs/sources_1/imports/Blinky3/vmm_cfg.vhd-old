@@ -1,0 +1,1023 @@
+--
+-- VMM registers and configuration
+-- this block handles the 1616 bit serial configuration
+-- streams
+--
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+--use IEEE.std_logic_arith.all;
+--use IEEE.numeric_bit.all;
+use IEEE.std_logic_unsigned.all;
+-- use IEEE.std_logic_signed.all;
+
+Library UNISIM;
+use UNISIM.vcomponents.all;
+
+--use work.user_package.all;
+--use work.user_addr_decode.all;
+--use work.system_package.all;
+--use work.ipbus.all;
+
+entity vmm_cfg is
+--generic(addr_width : natural := 6);
+port
+(
+	clk_ila				    : in 	STD_LOGIC;
+	clk200				    : in 	STD_LOGIC;
+	clk100                  : in    STD_LOGIC;
+	reset					: in 	STD_LOGIC;
+
+	cfg_bit_in			     : in	std_logic ;
+	cfg_bit_out			     : out	std_logic ;
+
+	vmm_ena				     : out std_logic ; -- reg enabled
+	vmm_wen				     : out std_logic ;
+	
+    vmm_ckdt_en		          : out std_logic ;
+    ckdt_sync                 : out std_logic ;
+    vmm_ckdt		          : in std_logic ;
+    
+    vmm_ckart_en		      : out std_logic ;
+    vmm_ckart		          : in std_logic ;
+	
+    vmm_clk_int		           : out std_logic ;
+	
+    cktk_enable				   : out std_logic ;
+    cktk_sync				   : out std_logic ;
+	vmm_cktk	  			   : in std_logic ; -- 31.25MHz/2 = 15.625MHz
+	
+    cktp_enable				   : out std_logic ;
+    cktp_sync				   : out std_logic ;
+	vmm_cktp				   : in std_logic ; -- 1MHz reg enabled
+    
+    ckbc_enable				   : out std_logic ;
+    ckbc_sync				   : out std_logic ;
+	vmm_ckbc			       : in std_logic ; -- 40MHz
+
+	vmm_data1			       : in std_logic;
+	vmm_data0			       : in std_logic;
+	vmm_art			           : in std_logic;
+	wr_en                      : out std_logic;
+	--vmm_sel                    : out std_logic_vector( 2 downto 0);
+	--display_sel                : out std_logic;
+
+	LEDx				       : out std_logic_vector( 2 downto 0);
+	axi_reg_4 : in STD_LOGIC_VECTOR(31 downto 0);  
+    axi_reg_5       ,axi_reg_6       ,axi_reg_7       ,axi_reg_8       ,axi_reg_9 :  in STD_LOGIC_VECTOR(31 downto 0);    
+    axi_reg_10      ,axi_reg_11      ,axi_reg_12      ,axi_reg_13      ,axi_reg_14 : in STD_LOGIC_VECTOR(31 downto 0);  
+    axi_reg_15      ,axi_reg_16      ,axi_reg_17      ,axi_reg_18      ,axi_reg_19 : in STD_LOGIC_VECTOR(31 downto 0);    
+    axi_reg_20      ,axi_reg_21      ,axi_reg_22      ,axi_reg_23      ,axi_reg_24 : in STD_LOGIC_VECTOR(31 downto 0);  
+    axi_reg_25      ,axi_reg_26      ,axi_reg_27      ,axi_reg_28      ,axi_reg_29 : in STD_LOGIC_VECTOR(31 downto 0); 
+    axi_reg_30      ,axi_reg_31      ,axi_reg_32      ,axi_reg_33      ,axi_reg_34 : in STD_LOGIC_VECTOR(31 downto 0);  
+    axi_reg_35      ,axi_reg_36      ,axi_reg_37      ,axi_reg_38      ,axi_reg_39 : in STD_LOGIC_VECTOR(31 downto 0);
+    axi_reg_40      ,axi_reg_41      ,axi_reg_42      ,axi_reg_43      ,axi_reg_44 : in STD_LOGIC_VECTOR(31 downto 0);  
+    axi_reg_45      ,axi_reg_46      ,axi_reg_47      ,axi_reg_48      ,axi_reg_49 : in STD_LOGIC_VECTOR(31 downto 0); 
+    axi_reg_50      ,axi_reg_51      ,axi_reg_52      ,axi_reg_53      ,axi_reg_54 : in STD_LOGIC_VECTOR(31 downto 0)  
+
+);
+	
+end vmm_cfg;
+
+architecture rtl of vmm_cfg is
+
+-- components are here
+COMPONENT fifo_generator_0
+  PORT (
+    rst : IN STD_LOGIC;
+    wr_clk : IN STD_LOGIC;
+    rd_clk : IN STD_LOGIC;
+    din : IN STD_LOGIC_VECTOR(40 DOWNTO 0);
+    wr_en : IN STD_LOGIC;
+    rd_en : IN STD_LOGIC;
+    dout : OUT STD_LOGIC_VECTOR(40 DOWNTO 0);
+    full : OUT STD_LOGIC;
+    almost_full : OUT STD_LOGIC;
+    empty : OUT STD_LOGIC;
+    almost_empty : OUT STD_LOGIC;
+    rd_data_count : OUT STD_LOGIC_VECTOR(10 DOWNTO 0);
+    wr_data_count : OUT STD_LOGIC_VECTOR(10 DOWNTO 0);
+    prog_full : OUT STD_LOGIC;
+    prog_empty : OUT STD_LOGIC
+  );
+END COMPONENT; 
+
+-- need to ask bill how to add this
+--COMPONENT ila_1
+--    PORT (
+--	   clk : IN STD_LOGIC;
+--	   probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--	   probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+--    );
+--END COMPONENT  ;
+
+--COMPONENT vio_0
+--    PORT (
+--	   clk : IN STD_LOGIC;
+--	   probe_in0 : IN STD_LOGIC_VECTOR( 7 DOWNTO 0); 
+--	   probe_out0 : OUT STD_LOGIC_VECTOR( 7 DOWNTO 0)
+--    );
+--END COMPONENT  ;
+
+--    signal clk_ila         : std_logic;
+	signal probe0       : STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    signal probe1       : STD_LOGIC_VECTOR(31 DOWNTO 0);
+--	signal probe_in0    : STD_LOGIC_VECTOR(7 DOWNTO 0); 
+--  signal probe_out0   : STD_LOGIC_VECTOR(7 DOWNTO 0);
+
+    signal vmm_data0_ii         : std_logic := '0';
+    signal vmm_data0_ii_ack     : std_logic := '0';
+    signal vmm_ckdt_en_i        : std_logic ;
+	signal ckdt_sync_i          : std_logic ;
+    signal vmm_ckdt_i           : std_logic ;
+    signal dt_cntr              : std_logic_vector(7 downto 0) ;
+    signal dt_state             : std_logic_vector(7 downto 0) ;
+    signal dt_reset             : std_logic ;
+    signal dt_done              : std_logic ;
+
+    
+    signal vmm_ckart_en_i     : std_logic ;
+    signal vmm_ckart_i        : std_logic ;
+	signal vmm_data1_i        : std_logic;
+	signal vmm_data0_i        : std_logic;
+	signal vmm_art_i          : std_logic;
+	
+    signal clk_tk_sync_cnt : STD_LOGIC_VECTOR( 31 DOWNTO 0) :=x"00004047";
+   
+	signal cktk_enable_i   : std_logic;
+	signal cktk_enable_2_i : std_logic;
+	signal cktk_sync_i     : std_logic;
+	signal cktk_i          : std_logic;
+	signal cktp_i          : std_logic;
+	signal ckbc_i          : std_logic;
+
+	signal cfg_bit_in_i	   : std_logic;
+	signal cfg_bit_out_i   : std_logic;		
+	
+    signal cfg_sm_cntr	   : std_logic_vector(31 downto 0);
+    signal cfg_rst_ctr	   : std_logic_vector(31 downto 0);
+
+	constant cfg_bits : integer := 1616 ; -- the useful bits
+	constant cfg_bits_max : integer := 1632 ;
+	
+	type array_64x32bit  is array (0 to 63)  of std_logic_vector(31 downto 0);
+	signal regs_out, regs_in: array_64x32bit;		
+
+	signal statex : std_logic_vector(3 downto 0) ;
+	signal bit_cntrx : std_logic_vector( 11 downto 0) ;
+	
+	signal vmm_run, strobe : std_logic;
+	signal vect_eq, vmm_rx_en_int, vmm_tx_en_int : std_logic ;
+	signal cfg_sr_done : std_logic ;
+	signal vmm_run_pulse, vmm_rst_done_pulse : std_logic ;
+	signal vmm_clk_int_i, vmm_ena_int, vmm_wen_int, vmm_rst_done : std_logic ; -- from VMM cfg SM
+	signal vmm_clk_int2_i, vmm_ena_int2, vmm_wen_int2 : std_logic ; -- from VMM reset SM
+	signal gbl_rst, acq_rst : std_logic ;
+	signal gbl_rst_pulse, acq_rst_pulse : std_logic ;
+	
+	-- make two shift registers 1616 bits long.
+	-- one for writing to VMM and one for reading from VMM
+	signal vmm_cfg_in, vmm_cfg_out : std_logic_vector(cfg_bits_max-1 downto 0) ;
+	signal test_p, test_n, ckbc_enable_i, ckbc_sync_i : std_logic ;
+	signal cktp_enable_i, cktp_sync_i, ena_enable, vmm_clk_token_i : std_logic ;
+	
+--	signal cktp_cntr : std_logic_vector(8 downto 0) ;
+	signal cktp_cntr : std_logic_vector(10 downto 0) ;
+
+--	signal token_delay : std_logic_vector(1 downto 0) ;
+	
+	-- a larger number here will lengthen the time between token pulses
+	signal token_cntr : std_logic_vector(4 downto 0) ; -- 32 ns pulse every 640 ns
+
+	signal cfg_clk_sel : std_logic_vector(2 downto 0) ;
+
+    type state_t is (s0, s1, s2, s3, s4, s5, s6, s7, s8);
+-- s1 is global reset
+-- s2 is config
+-- s3 is config again
+-- s4 is ckbc_enable
+-- s5 is set enable high
+-- s6 is cktp enable
+
+   signal state  : state_t;
+--   signal counter   : integer;
+--   signal condition : boolean;
+
+	SIGNAL 	clk_40MHz       : STD_LOGIC;
+	SIGNAL 	clk_100kHz      : STD_LOGIC;	
+--	SIGNAL  reset           : STD_LOGIC;
+	signal counter1 : std_logic_vector (31 downto 0) := X"00000000";	
+	signal ckbc_cntr : std_logic_vector (0 downto 0) := (others=>'0');	
+--	signal counter2 : std_logic_vector (31 downto 0) := X"00000000";
+--	signal delay_cntr_max, delay_cntr_en : std_logic ;
+	signal delay_cntr : std_logic_vector (31 downto 0) := X"00000000";
+
+	signal LEDxi	: std_logic_vector( 2 downto 0);
+	signal rst_state	: std_logic_vector( 2 downto 0);
+	signal vmm_data0x	: std_logic;
+    signal vmm_artx	: std_logic;
+    
+     SIGNAL wr_clk_i                       :   STD_LOGIC := '0';
+     SIGNAL rd_clk_i                       :   STD_LOGIC := '0';
+     SIGNAL wr_data_count                  :   STD_LOGIC_VECTOR(11-1 DOWNTO 0) := (OTHERS => '0');
+     SIGNAL rd_data_count                  :   STD_LOGIC_VECTOR(11-1 DOWNTO 0) := (OTHERS => '0');
+     SIGNAL almost_full                    :   STD_LOGIC := '0';
+     SIGNAL almost_empty                   :   STD_LOGIC := '1';
+     SIGNAL rst                            :   STD_LOGIC := '0';
+     SIGNAL prog_full                      :   STD_LOGIC := '0';
+     SIGNAL prog_empty                     :   STD_LOGIC := '1';
+     SIGNAL fifo_wr_en_i                   :   STD_LOGIC := '0';
+     SIGNAL rd_en                          :   STD_LOGIC := '0';
+     SIGNAL din                            :   STD_LOGIC_VECTOR(41-1 DOWNTO 0) := (OTHERS => '0');
+     SIGNAL dout                           :   STD_LOGIC_VECTOR(41-1 DOWNTO 0) := (OTHERS => '0');
+     SIGNAL full                           :   STD_LOGIC := '0';
+     SIGNAL empty                          :   STD_LOGIC := '1';
+ 
+     SIGNAL vmm_data_buf                   :   STD_LOGIC_VECTOR( 38 DOWNTO 1) := (OTHERS => '0');
+ 
+     signal dt_cntr_intg0                :  integer := 0;
+     signal dt_cntr_intg1                :  integer := 1;
+     SIGNAL vmm_sel_i                    :   STD_LOGIC_VECTOR( 2 DOWNTO 0) := (OTHERS => '0');
+
+	attribute keep: boolean;
+
+--	attribute keep of vmm_cfg_in : signal is true;
+--	attribute keep of vmm_cfg_out : signal is true;
+--	attribute keep of vmm_data0 : signal is true;
+--   attribute keep of vmm_data0x : signal is true;
+--	attribute keep of vmm_art : signal is true;
+--    attribute keep of vmm_artx : signal is true;
+
+----	attribute keep of regs_out : signal is true;
+----	attribute keep of regs_in : signal is true;
+--	attribute keep of vect_eq : signal is true;
+
+--	attribute keep of vmm_load_en : signal is true;
+--	attribute keep of vmm_run : signal is true;
+--	attribute keep of vmm_clk_int_i : signal is true;
+--	attribute keep of vmm_clk_int2_i : signal is true;
+--	attribute keep of vmm_wen_int : signal is true;
+--	attribute keep of vmm_wen_int2 : signal is true;
+--	attribute keep of vmm_ena_int : signal is true;
+--	attribute keep of vmm_ena_int2 : signal is true;
+--	attribute keep of vmm_rst_done : signal is true;
+--	attribute keep of acq_rst : signal is true;
+--	attribute keep of gbl_rst : signal is true;
+----	attribute keep of acq_rst_pulse : signal is true;
+--	attribute keep of gbl_rst_pulse : signal is true;
+----	attribute keep of vmm_160m_buf : signal is true;
+----	attribute keep of vmm_40m_buf : signal is true;
+--	attribute keep of vmm_wen : signal is true;
+--	attribute keep of vmm_ena : signal is true;
+--	attribute keep of cktp_enable : signal is true;
+--	attribute keep of ckbc_enable_i : signal is true;
+--	attribute keep of ena_enable : signal is true;
+--	attribute keep of cktk_enable_i: signal is true;
+--	attribute keep of cktk_enable_2_i: signal is true;
+--	attribute keep of cktk_sync_i: signal is true;
+--	attribute keep of vmm_cktk: signal is true;
+----	attribute keep of vmm_ckdt_en: signal is true;
+--	attribute keep of vmm_cktp: signal is true;
+--	attribute keep of vmm_ckbc: signal is true;
+----	attribute keep of vmm_ckart: signal is true; 
+----	attribute keep of token_delay: signal is true; 
+--	attribute keep of cfg_clk_sel: signal is true; 
+--	attribute keep of vmm_rx_en_int: signal is true; 
+--	attribute keep of vmm_tx_en_int: signal is true; 
+--	attribute keep of state: signal is true; 
+----	attribute keep of clk: signal is true; 
+--	attribute keep of clk200: signal is true; 
+--	attribute keep of statex: signal is true; 
+--	attribute keep of bit_cntrx: signal is true; 
+
+begin
+
+
+	--=============================--
+	-- IO mapping
+	--=============================--
+--	regs_o	<= regs_out;
+--	regs_in	<= regs_i ;
+
+--	regs( 0) 		<= x"acafe00a";	
+--	regs( 1) 		<= regs_i( 1);	
+--	regs( 2) 		<= regs_i( 2);	
+--	regs( 3) 		<= regs_i( 3);
+--	regs(15) 		<= regs_i(15);
+	--=============================--
+
+	
+	
+--	--=============================--
+	process( reset, clk100)
+--	--=============================--
+
+begin
+    if rising_edge( clk100) then 
+	   if (reset='1') then
+		-- put config data here
+		regs_out(	 0	  ) <= axi_reg_4 ;
+        regs_out(    1    ) <= axi_reg_5 ;
+        regs_out(    2    ) <= axi_reg_6 ;
+        regs_out(    3    ) <= axi_reg_7 ;
+        regs_out(    4    ) <= axi_reg_8 ;
+        regs_out(    5    ) <= axi_reg_9 ;
+        regs_out(    6    ) <= axi_reg_10 ;
+        regs_out(    7    ) <= axi_reg_11 ;
+        regs_out(    8    ) <= axi_reg_12 ;
+        regs_out(    9    ) <= axi_reg_13 ;
+        regs_out(    10    ) <= axi_reg_14 ;
+        regs_out(    11    ) <= axi_reg_15 ;
+        regs_out(    12    ) <= axi_reg_16 ;
+        regs_out(    13    ) <= axi_reg_17 ;
+        regs_out(    14    ) <= axi_reg_18 ;
+        regs_out(    15    ) <= axi_reg_19 ;
+        regs_out(    16    ) <= axi_reg_20 ;
+        regs_out(    17    ) <= axi_reg_21 ;
+        regs_out(    18    ) <= axi_reg_22 ;
+        regs_out(    19    ) <= axi_reg_23 ;
+        regs_out(    20    ) <= axi_reg_24 ;
+        regs_out(    21    ) <= axi_reg_25 ;
+        regs_out(    22    ) <= axi_reg_26 ;
+        regs_out(    23    ) <= axi_reg_27 ;
+        regs_out(    24    ) <= axi_reg_28 ;
+        regs_out(    25    ) <= axi_reg_29 ;
+        regs_out(    26    ) <= axi_reg_30 ;
+        regs_out(    27    ) <= axi_reg_31 ;
+        regs_out(    28    ) <= axi_reg_32 ;
+        regs_out(    29    ) <= axi_reg_33 ;
+        regs_out(    30    ) <= axi_reg_34 ;
+        regs_out(    31    ) <= axi_reg_35 ;
+        regs_out(    32    ) <= axi_reg_36 ;
+        regs_out(    33    ) <= axi_reg_37 ;
+        regs_out(    34    ) <= axi_reg_38 ;
+        regs_out(    35    ) <= axi_reg_39 ;
+        regs_out(    36    ) <= axi_reg_40 ;
+        regs_out(    37    ) <= axi_reg_41 ;
+        regs_out(    38    ) <= axi_reg_42 ; --
+        regs_out(    39    ) <= axi_reg_43 ;
+        regs_out(    40    ) <= axi_reg_44 ;
+        regs_out(    41    ) <= axi_reg_45 ;
+        regs_out(    42    ) <= axi_reg_46 ;
+        regs_out(    43    ) <= axi_reg_47 ;
+        regs_out(    44    ) <= axi_reg_48 ;
+        regs_out(    45    ) <= axi_reg_49 ;
+        regs_out(    46    ) <= axi_reg_50 ;
+        regs_out(    47    ) <= axi_reg_51 ;
+        regs_out(    48    ) <= axi_reg_52 ;
+        regs_out(    49    ) <= axi_reg_53 ;
+        regs_out(    50    ) <= axi_reg_54 ; -- only low 16 used
+        regs_out(    51    ) <= (others => '0') ;
+        regs_out(    52    ) <= (others => '0') ;
+        regs_out(    53    ) <= (others => '0') ;
+        regs_out(    54    ) <= (others => '0') ;
+        regs_out(    55    ) <= (others => '0') ;
+        regs_out(    56    ) <= (others => '0') ;
+        regs_out(    57    ) <= (others => '0') ;
+        regs_out(    58    ) <= (others => '0') ;
+        regs_out(    59    ) <= (others => '0') ;
+        regs_out(    61    ) <= (others => '0') ;
+        regs_out(    62    ) <= (others => '0') ;
+        regs_out(    63    ) <= (others => '0') ;
+        
+--        regs_out(	0	) <= x"00080000" ;
+--        regs_out(    1    ) <= x"00000800" ;
+--        regs_out(    2    ) <= x"08000008" ;
+--        regs_out(    3    ) <= x"00080000" ;
+--        regs_out(    4    ) <= x"00000800" ;
+--        regs_out(    5    ) <= x"08000008" ;
+--        regs_out(    6    ) <= x"00080000" ;
+--        regs_out(    7    ) <= x"00000800" ;
+--        regs_out(    8    ) <= x"08000008" ;
+--        regs_out(    9    ) <= x"00080000" ;
+--        regs_out(    10    ) <= x"00000800" ;
+--        regs_out(    11    ) <= x"08000008" ;
+--        regs_out(    12    ) <= x"00080000" ;
+--        regs_out(    13    ) <= x"00000800" ;
+--        regs_out(    14    ) <= x"08000008" ;
+--        regs_out(    15    ) <= x"00080000" ;
+--        regs_out(    16    ) <= x"00000800" ;
+--        regs_out(    17    ) <= x"08000008" ;
+--        regs_out(    18    ) <= x"00080000" ;
+--        regs_out(    19    ) <= x"00000800" ;
+--        regs_out(    20    ) <= x"08000008" ;
+--        regs_out(    21    ) <= x"00080000" ;
+--        regs_out(    22    ) <= x"00000800" ;
+--        regs_out(    23    ) <= x"08000008" ;
+--        regs_out(    24    ) <= x"00080000" ;
+--        regs_out(    25    ) <= x"00000800" ;
+--        regs_out(    26    ) <= x"08000008" ;
+--        regs_out(    27    ) <= x"00080000" ;
+--        regs_out(    28    ) <= x"00000800" ;
+--        regs_out(    29    ) <= x"08000008" ;
+--        regs_out(    30    ) <= x"00080000" ;
+--        regs_out(    31    ) <= x"00000800" ;
+--        regs_out(    32    ) <= x"08000008" ;
+--        regs_out(    33    ) <= x"00080000" ;
+--        regs_out(    34    ) <= x"00000800" ;
+--        regs_out(    35    ) <= x"08000008" ;
+--        regs_out(    36    ) <= x"00080000" ;
+--        regs_out(    37    ) <= x"00000800" ;
+--        regs_out(    38    ) <= x"08000010" ; --
+--        regs_out(    39    ) <= x"00080000" ;
+--        regs_out(    40    ) <= x"00000800" ;
+--        regs_out(    41    ) <= x"08000008" ;
+--        regs_out(    42    ) <= x"00080000" ;
+--        regs_out(    43    ) <= x"00000800" ;
+--        regs_out(    44    ) <= x"08000008" ;
+--        regs_out(    45    ) <= x"00080000" ;
+--        regs_out(    46    ) <= x"00000800" ;
+--        regs_out(    47    ) <= x"08000008" ;
+--        regs_out(    48    ) <= x"01400000" ;
+--        regs_out(    49    ) <= x"3424B12C" ;
+--        regs_out(    50    ) <= x"00001C6E" ; -- only low 16 used
+--        regs_out(    51    ) <= (others => '0') ;
+--        regs_out(    52    ) <= (others => '0') ;
+--        regs_out(    53    ) <= (others => '0') ;
+--        regs_out(    54    ) <= (others => '0') ;
+--        regs_out(    55    ) <= (others => '0') ;
+--        regs_out(    56    ) <= (others => '0') ;
+--        regs_out(    57    ) <= (others => '0') ;
+--        regs_out(    58    ) <= (others => '0') ;
+--        regs_out(    59    ) <= (others => '0') ;
+--        regs_out(    61    ) <= (others => '0') ;
+--        regs_out(    62    ) <= (others => '0') ;
+--        regs_out(    63    ) <= (others => '0') ;
+
+	end if;
+end if;
+	end process;
+--	
+
+	-- VMM config mux select
+--	vmm_vmm_sel <= regs_out(63)(14 downto 12) ;
+
+	-- config in
+	process(vmm_clk_int_i, reset, cfg_bit_in)
+	begin -- a load here will reset the 1616 bit word.
+		if (reset = '1') then
+			 vmm_cfg_in <= (others=>'1') ; -- in from VMM
+			 -- need 51 32 bit words for test value 
+		else
+			if falling_edge(vmm_clk_int_i) then -- we need to watch how the serial stream gets captured
+				if (vmm_rx_en_int = '1') then
+					-- if we send out LSB first
+					vmm_cfg_in <= cfg_bit_in & vmm_cfg_in(cfg_bits_max-1 downto 1) ; -- shift -> (only use top 1616)
+					-- if we send out MSB first
+					--- vmm_cfg_in <= vmm_cfg_in(cfg_bits_max-2 downto 0) & cfg_bit_in ; -- shift <- (only use low 1616)
+				end if ;
+			end if ;
+		end if ;
+	end process ;
+
+	-- map vmm cfg to reg_in registers
+	-- a continuous assignment
+	process( clk200, reset, vmm_cfg_in, cfg_sr_done, vect_eq, regs_out, regs_in)
+	begin
+		if (reset = '1') then
+			regs_in <= (others => (others => '0')) ;
+		else
+			-- this did not map correct!!!!
+--			for i in 0 to (cfg_bits_max/32)-1 loop -- map 0 to 50 for reading
+--				regs_in(i) <= vmm_cfg_in( ((i*32)+32)-1 downto (i*32) ) ;
+--			end loop ;
+
+		regs_in(	0	) <= vmm_cfg_in(	 31	 downto 	 0   );
+		regs_in(	1	) <= vmm_cfg_in(	 63	 downto 	 32	);
+		regs_in(	2	) <= vmm_cfg_in(	 95	 downto      64	);
+		regs_in(	3	) <= vmm_cfg_in(	127	 downto 	 96	);
+		regs_in(	4	) <= vmm_cfg_in(	159	 downto 	128	);
+		regs_in(	5	) <= vmm_cfg_in(	191	 downto 	160	);
+		regs_in(	6	) <= vmm_cfg_in(	223	 downto 	192	);
+		regs_in(	7	) <= vmm_cfg_in(	255	 downto 	224	);
+		regs_in(	8	) <= vmm_cfg_in(	287	 downto 	256	);
+		regs_in(	9	) <= vmm_cfg_in(	319	 downto 	288	);
+		regs_in(	10	) <= vmm_cfg_in(	351	 downto 	320	);
+		regs_in(	11	) <= vmm_cfg_in(	383	 downto 	352	);
+		regs_in(	12	) <= vmm_cfg_in(	415	 downto 	384	);
+		regs_in(	13	) <= vmm_cfg_in(	447	 downto 	416	);
+		regs_in(	14	) <= vmm_cfg_in(	479	 downto 	448	);
+		regs_in(	15	) <= vmm_cfg_in(	511	 downto 	480	);
+		regs_in(	16	) <= vmm_cfg_in(	543	 downto 	512	);
+		regs_in(	17	) <= vmm_cfg_in(	575	 downto 	544	);
+		regs_in(	18	) <= vmm_cfg_in(	607	 downto 	576	);
+		regs_in(	19	) <= vmm_cfg_in(	639	 downto 	608	);
+		regs_in(	20	) <= vmm_cfg_in(	671	 downto 	640	);
+		regs_in(	21	) <= vmm_cfg_in(	703	 downto 	672	);
+		regs_in(	22	) <= vmm_cfg_in(	735	 downto 	704	);
+		regs_in(	23	) <= vmm_cfg_in(	767	 downto 	736	);
+		regs_in(	24	) <= vmm_cfg_in(	799	 downto 	768	);
+		regs_in(	25	) <= vmm_cfg_in(	831	 downto 	800	);
+		regs_in(	26	) <= vmm_cfg_in(	863	 downto 	832	);
+		regs_in(	27	) <= vmm_cfg_in(	895	 downto 	864	);
+		regs_in(	28	) <= vmm_cfg_in(	927	 downto 	896	);
+		regs_in(	29	) <= vmm_cfg_in(	959	 downto 	928	);
+		regs_in(	30	) <= vmm_cfg_in(	991	 downto 	960	);
+		regs_in(	31	) <= vmm_cfg_in(	1023	 downto 	992	);
+		regs_in(	32	) <= vmm_cfg_in(	1055	 downto 	1024	);
+		regs_in(	33	) <= vmm_cfg_in(	1087	 downto 	1056	);
+		regs_in(	34	) <= vmm_cfg_in(	1119	 downto 	1088	);
+		regs_in(	35	) <= vmm_cfg_in(	1151	 downto 	1120	);
+		regs_in(	36	) <= vmm_cfg_in(	1183	 downto 	1152	);
+		regs_in(	37	) <= vmm_cfg_in(	1215	 downto 	1184	);
+		regs_in(	38	) <= vmm_cfg_in(	1247	 downto 	1216	);
+		regs_in(	39	) <= vmm_cfg_in(	1279	 downto 	1248	);
+		regs_in(	40	) <= vmm_cfg_in(	1311	 downto 	1280	);
+		regs_in(	41	) <= vmm_cfg_in(	1343	 downto 	1312	);
+		regs_in(	42	) <= vmm_cfg_in(	1375	 downto 	1344	);
+		regs_in(	43	) <= vmm_cfg_in(	1407	 downto 	1376	);
+		regs_in(	44	) <= vmm_cfg_in(	1439	 downto 	1408	);
+		regs_in(	45	) <= vmm_cfg_in(	1471	 downto 	1440	);
+		regs_in(	46	) <= vmm_cfg_in(	1503	 downto 	1472	);
+		regs_in(	47	) <= vmm_cfg_in(	1535	 downto 	1504	);
+		regs_in(	48	) <= vmm_cfg_in(	1567	 downto 	1536	);
+		regs_in(	49	) <= vmm_cfg_in(	1599	 downto 	1568	);
+		regs_in(	50	) <= vmm_cfg_in(	1631	 downto 	1600	);
+
+			regs_in(63) <= regs_out(63) ; -- use top word for status/control. loop all for now.
+			regs_in(62)(0) <= cfg_sr_done ;
+			regs_in(62)(1) <= vect_eq ;
+			regs_in(62)(31 downto 2) <= (others => '0') ; -- clear the rest
+			
+		end if ;
+	end process ;
+
+	-- send out most significant bit
+--	cfg_bit_out <= vmm_cfg_out(cfg_bits-1) ; -- send out bit 1616
+	
+	-- compare the two 1616 bit strings
+	comp_vectr : entity work.comp_vect
+	generic map(max_bits => cfg_bits) 
+	port map(A => vmm_cfg_out(cfg_bits-1 downto 0), -- tx stream. hi 16 unused
+				B => vmm_cfg_in(cfg_bits_max-1 downto 16), -- rx stream. low 16 unused -- changed to 17 by SAJONES, change back to 16
+				res => vect_eq -- 1=equal
+				) ;
+
+
+
+	--
+	-- state machine
+	--
+
+    config_vmm_fsm : process( clk200, state, reset, vmm_rst_done, cfg_sr_done, 
+--                cfg_sm_cntr, delay_cntr_max, delay_cntr_en, ckbc_enable_i,
+                cfg_sm_cntr, ckbc_enable_i,
+    			vmm_run, gbl_rst, acq_rst, ena_enable, cktp_enable_i, cktk_enable_i, vmm_ckart_en_i)
+
+    begin
+	if rising_edge( clk200) then
+		if (reset = '1') then
+
+			state <= s0 ;
+			cfg_sm_cntr <= (others =>'0');
+			
+			vmm_run <= '0' ; -- cfg run
+			gbl_rst <= '0' ; -- gbl rst
+			acq_rst <= '0' ; -- acq rst
+			ena_enable <= '0' ; -- enable ENA
+			vmm_ckart_en_i <= '0' ;
+			cktp_enable_i <= '0' ; -- enable cktp
+			ckbc_enable_i <= '0' ; -- enable ckbc
+			cktk_enable_i <= '0' ; -- enable token clock
+			cktp_sync_i <= '0' ; -- sync cktp
+            ckbc_sync_i <= '0' ; -- sync ckbc
+            cktk_sync_i <= '0' ; -- sync token clock
+
+		else	
+		
+         case state is
+                when s0 => -- initialize and do the global reset
+							LEDxi <= b"000";
+
+							vmm_run <= '0' ; -- cfg run
+							acq_rst <= '0' ; -- acq rst
+							ena_enable <= '0' ; -- enable ENA
+							vmm_ckart_en_i <= '0' ;
+							cktp_enable_i <= '0' ; -- enable cktp
+                            ckbc_enable_i <= '0' ; -- enable ckbc
+                            cktk_enable_i <= '0' ; -- enable token clock
+							cktp_sync_i <= '0' ; -- sync cktp
+                            ckbc_sync_i <= '0' ; -- sync ckbc
+                            cktk_sync_i <= '0' ; -- sync token clock
+							
+
+							if( cfg_sm_cntr = x"00000000") then
+								gbl_rst <= '1' ; 
+								cfg_sm_cntr <= cfg_sm_cntr + '1';
+							else 
+								if( cfg_sm_cntr = x"00000040") then
+									gbl_rst <= '0' ; 
+									cfg_sm_cntr <= cfg_sm_cntr + '1';
+								else
+--									if( cfg_sm_cntr = x"002fffff") then
+ 									if( cfg_sm_cntr = x"00100000") then
+-- 									if( cfg_sm_cntr = x"00006000") then
+--									if( cfg_sm_cntr = x"00004000") then
+										state <= s1 ; 
+										cfg_sm_cntr <= (others =>'0');
+									else
+										cfg_sm_cntr <= cfg_sm_cntr + '1';
+									end if ;
+								end if ;
+							end if ;
+
+                when s1 => -- send the config bits
+
+							LEDxi <= b"001";
+
+							if( cfg_sm_cntr = x"00000000") then
+								vmm_run <= '1' ; -- cfg run
+								cfg_sm_cntr <= cfg_sm_cntr + '1';
+							else 
+								if( cfg_sm_cntr = x"00000040") then
+									vmm_run <= '0' ; -- cfg run
+									cfg_sm_cntr <= cfg_sm_cntr + '1';
+								else
+--									if( cfg_sm_cntr = x"01ffffff") then
+									if( cfg_sm_cntr = x"00100000") then
+										state <= s2 ; 
+										cfg_sm_cntr <= (others =>'0');
+									else
+										cfg_sm_cntr <= cfg_sm_cntr + '1';
+									end if ;
+								end if ;
+							end if ;
+
+			 when s2 => -- send the config bits again
+
+							LEDxi <= b"010";
+							
+							if( cfg_sm_cntr = x"00000000") then
+								vmm_run <= '1' ; -- cfg run
+								cfg_sm_cntr <= cfg_sm_cntr + '1';
+							else 
+								if( cfg_sm_cntr = x"00000040") then
+									vmm_run <= '0' ; -- cfg run
+									cfg_sm_cntr <= cfg_sm_cntr + '1';
+								else
+									if( cfg_sm_cntr = x"00100000") then
+										state <= s3 ; 
+										cfg_sm_cntr <= (others =>'0');
+									else
+										cfg_sm_cntr <= cfg_sm_cntr + '1';
+									end if ;
+								end if ;
+							end if ;
+
+
+                when s3 => -- now start ckbc and ckart
+					 
+							LEDxi <= b"011";
+
+							if( cfg_sm_cntr = x"00000000") then
+								ckbc_sync_i     <= '1' ;
+								ckbc_enable_i   <= '1' ;
+								vmm_ckart_en_i  <= '1' ;
+								cfg_sm_cntr     <= cfg_sm_cntr + '1';
+ 							else 
+								if( cfg_sm_cntr = x"00000010") then
+									cfg_sm_cntr <= cfg_sm_cntr + '1';
+								else
+--									if( cfg_sm_cntr = x"01ffffff") then
+									if( cfg_sm_cntr = x"00010000") then
+--									if( cfg_sm_cntr = x"00030000") then
+										state <= s4 ; 
+										cfg_sm_cntr <= (others =>'0');
+									else
+										cfg_sm_cntr <= cfg_sm_cntr + '1';
+									end if ;
+								end if ;
+							end if ;
+
+                when s4 => -- do the acquisition reset
+							LEDxi <= b"111";
+							if( cfg_sm_cntr = x"00000000") then
+                                acq_rst <= '1' ; -- acq rst
+                                cfg_sm_cntr <= cfg_sm_cntr + '1';
+                            else 
+							  if( cfg_sm_cntr = x"00000002") then
+                                acq_rst <= '1' ; -- acq rst
+                                cfg_sm_cntr <= cfg_sm_cntr + '1';
+                              else 
+								if( cfg_sm_cntr = x"00000040") then
+									acq_rst <= '0' ; 
+									cfg_sm_cntr <= cfg_sm_cntr + '1';
+								else
+--									if( cfg_sm_cntr = x"00004000") then
+									if( cfg_sm_cntr = x"00100000") then
+										state <= s5 ; 
+										cfg_sm_cntr <= (others =>'0');
+									else
+										cfg_sm_cntr <= cfg_sm_cntr + '1';
+									end if ;
+								  end if ;
+								end if ;
+							  end if ;
+
+
+                when s5 => --  now set ena high
+					 
+							LEDxi <= b"100";
+
+							if( cfg_sm_cntr = x"00000400") then
+								state <= s6; 
+								cfg_sm_cntr <= (others =>'0');
+							else
+   								ena_enable <= '1' ; 
+                                cfg_sm_cntr <= cfg_sm_cntr + '1';
+
+                            end if ;
+ 
+
+     
+                when s6 =>	--  now enable test pulse clock
+
+    						LEDxi <= b"101";
+
+--							if( cfg_sm_cntr = x"00004000") then
+--							if( cfg_sm_cntr = x"00000400") then
+--							if( cfg_sm_cntr = x"00004043") then -- for ckbc = 50MHz
+--							if( cfg_sm_cntr = x"00004046") then -- for ckbc = 40MHz
+--							if( cfg_sm_cntr = x"00004047") then -- for ckbc = 40MHz --x-21
+							if( cfg_sm_cntr = clk_tk_sync_cnt) then -- for ckbc = 40MHz --x-21
+--							if( cfg_sm_cntr = x"00004048") then -- for ckbc = 40MHz + 200MHz ckdt
+							    state <= s7; 
+								cfg_sm_cntr <= (others =>'0');
+							else
+								cfg_sm_cntr <= cfg_sm_cntr + '1';
+							    cktp_sync_i <= '1' ;
+							    cktp_enable_i <= '1' ;
+							end if ;
+
+
+                when s7 =>	--  now enable token clock
+                            LEDxi <= b"110";
+                            cfg_sm_cntr <= cfg_sm_cntr + '1';
+                            cktk_enable_i <= '1' ;
+                            cktk_sync_i <= '1' ;
+                            ckdt_sync_i <= '1' ;                            
+
+				when others => state <= s1 ;
+					 
+            end case;
+        end if;
+      end if;
+		  
+    end process config_vmm_fsm ;
+
+
+
+    
+	-- map output reg to vmm cfg
+	-- this is really a continuous assignment....
+	vmmcfgout_gen:
+	for i in 0 to (cfg_bits_max/32)-1 generate -- 0 to 50 is 51x32=1632
+			vmm_cfg_out( ((i*32)+32)-1 downto (i*32) ) <= regs_out(i) ;
+	end generate ;
+
+
+	vmm_ena  <= ena_enable or (vmm_ena_int or vmm_ena_int2) ; -- let register set it high -- Sajones
+
+    vmm_wen  <= vmm_wen_int or vmm_wen_int2 ;
+	
+
+
+	-- config out
+	vmm_cfg_sr_inst : entity work.vmm_cfg_sr 
+	generic map(cfg_bits => cfg_bits) -- for test use default of 32 not 1616
+	port map(   clk100           => clk100, -- main clock
+			    rst              => reset, -- reset
+				load_en          => '0', -- vmm_load_en_pulse, -- load word to be sent
+--				run              => vmm_run_pulse, -- start state machine cfg bit
+                run              => vmm_run, -- start state machine cfg bit
+				vmm_cfg_out      => vmm_cfg_out(cfg_bits-1 downto 0), -- only the low 1616 of 1632
+				cfg_bit_out      => cfg_bit_out_i, -- serial out
+				vmm_clk          => vmm_clk_int_i, -- cktk runs at IPB clk 31.15MHz/2
+				vmm_rx_en        => vmm_rx_en_int, -- enable the 1616 bit (rx) shift register
+				vmm_tx_en        => vmm_tx_en_int, -- enable the 1616 bit (tx) shift register
+				vmm_ena          => vmm_ena_int, -- or with cfg sm
+				vmm_wen          => vmm_wen_int, -- or with cfg sm
+				statex           => statex,
+		        bit_cntrx        => bit_cntrx
+--				done             => cfg_sr_done -- pulse
+	);
+	
+
+	vmm_cfg_rst_inst : entity work.vmm_cfg_rst
+	port map(  clk100          => clk100, -- main clock
+				rst            => reset, -- reset
+				gbl_rst        => gbl_rst, -- input
+--              gbl_rst        => gbl_rst_pulse, -- input
+                acq_rst        => acq_rst, -- input
+--              acq_rst        => acq_rst_pulse, -- input
+    			vmm_ena        => vmm_ena_int2, -- or with cfg sm
+				vmm_wen        => vmm_wen_int2, -- or with cfg sm
+				rst_state       => rst_state,
+				cfg_rst_ctr_e   => cfg_rst_ctr,
+				done            => vmm_rst_done -- pulse
+	);
+				
+				
+	LEDx <= LEDxi;
+
+
+
+    vmm_ckdt_en <= vmm_ckdt_en_i;
+--    vmm_ckdt_en <= '1';
+    vmm_ckdt_i <= vmm_ckdt;
+    ckdt_sync <= ckdt_sync_i;
+     
+     --data0 edge trigger
+   FDCE_inst_1 : FDCE
+   generic map (
+      INIT => '0') -- Initial value of register ('0' or '1')  
+   port map (
+      Q => vmm_data0_ii,      -- Data output
+      C => vmm_data0_i,      -- Clock input
+      CE => '1',    -- Clock enable input
+      CLR => vmm_data0_ii_ack,  -- Asynchronous clear input
+      D => '1'       -- Data input
+   );
+       
+	process( clk200, reset, dt_cntr, vmm_ckdt_en_i, cktk_enable_2_i, vmm_data0_ii, vmm_data0_ii_ack)
+
+   begin
+       if falling_edge( clk200) then
+           if( reset = '1') then
+               vmm_data0_ii_ack <='1';
+               dt_state <= (others => '0');
+--                dt_cntr <= (others => '0');
+               vmm_ckdt_en_i <= '0';
+               cktk_enable_2_i <= '1'; 
+--                vmm_data_buf <=  (others => '0');
+               wr_en <= '0';
+               dt_reset <= '1';
+               
+           else
+               case dt_state is
+                      when x"00" => --wait for data0
+                       if( vmm_data0_ii = '1') then
+                           cktk_enable_2_i <= '0';     -- turn off the cktk
+                           dt_state <= x"01";                 --start the readout
+                           dt_reset <= '0';
+                       else                            --wait
+                           vmm_data0_ii_ack <='0';     -- clear the reset
+                           vmm_ckdt_en_i <= '0';       -- ckdt off
+                           cktk_enable_2_i <= '1';     -- cktk enabled
+--                            vmm_data_buf <=  (others => '0'); -- clear the buffer
+                           wr_en <= '0';
+                           dt_reset <= '1';
+                        end if;                       
+                      
+                      when x"01" =>
+                       vmm_ckdt_en_i <= '1';             -- turn on ckdt
+                       dt_state <= x"02";                --start the readout
+
+                      when x"02" =>
+                       if( dt_done = '1') then
+                           vmm_ckdt_en_i <= '0';         -- turn off ckdt
+                           wr_en <= '1';
+                           dt_state <= x"03";               
+                       end if;
+
+                      when x"03" =>
+                       cktk_enable_2_i <= '1';           -- cktk enabled
+                       vmm_data0_ii_ack <='1';
+                       wr_en <= '0';
+                       dt_reset <= '1';
+                       dt_state <= x"00";                --start the readout
+
+                   when others => 
+                       vmm_ckdt_en_i <= '0';         -- turn off ckdt
+                       cktk_enable_2_i <= '1';           -- cktk enabled
+                       vmm_data0_ii_ack <='1';
+                       wr_en <= '0';
+                       dt_reset <= '1';
+                       dt_state <= x"00";                --start the readout
+                       
+               end case;
+           end if;
+       end if;
+   end process ;
+
+
+   process( vmm_ckdt_i, reset, dt_reset, dt_cntr, vmm_data_buf, vmm_data0_i, vmm_data1_i, dt_cntr_intg0, dt_cntr_intg1, dt_done)
+   begin
+       if( ( reset = '1') or (dt_reset = '1')) then
+           vmm_data_buf <=  (others => '0');
+           dt_cntr <= (others => '0');
+           dt_done <= '0';
+            
+       else 
+         if falling_edge( vmm_ckdt_i) then
+               case dt_cntr is
+                   when x"00" =>
+                       dt_cntr <= dt_cntr + '1';
+                   
+                   when x"12" =>
+                       vmm_data_buf( dt_cntr_intg0) <= vmm_data0_i;
+                       vmm_data_buf( dt_cntr_intg1) <= vmm_data1_i;
+                       dt_done <= '1';
+
+                   when others => 
+                       dt_cntr <= dt_cntr + '1';                        -- increment 
+                       vmm_data_buf( dt_cntr_intg0) <= vmm_data0_i;     --add data
+                       vmm_data_buf( dt_cntr_intg1) <= vmm_data1_i;
+
+               end case;
+           end if;
+       end if;
+   end process ;
+       
+
+dt_cntr_intg0 <= to_integer( unsigned( ( dt_cntr(  4 downto 0) & '0')));
+dt_cntr_intg1 <= to_integer( unsigned( ( dt_cntr(  4 downto 0) & '1')));
+
+
+-- uncomment once i add back ila_1
+-- ask bill how to do this
+-- ila_1_inst : ila_1
+--PORT MAP (
+--	clk => clk_ila,
+--	probe0 => probe0, 
+--	probe1 => probe1
+--);
+
+
+ probe0	<= 		statex
+				& vmm_clk_int_i & vmm_clk_int2_i & vmm_art & rst_state( 0)
+--				& vmm_clk_int_i & rst_state
+				& acq_rst & vmm_data0 & reset & vmm_clk_token_i
+				& cfg_bit_in_i & cfg_bit_out_i & cktp_i & cktp_enable_i 
+				& ckbc_i & vmm_run & cfg_sr_done & ena_enable
+				& vmm_ena_int2 & vmm_wen_int2 & vmm_ena_int & vmm_wen_int 
+				& ckbc_enable_i & gbl_rst & cktk_i & cktk_enable_i   
+				& LEDxi & clk_ila;
+
+
+    probe1    <= cfg_rst_ctr;
+
+    vmm_ckart_en <= vmm_ckart_en_i;
+--    vmm_ckart_en <= '1';
+    vmm_ckart_i <= vmm_ckart;
+
+	vmm_data1_i <= vmm_data1;
+	vmm_data0_i <= vmm_data0;
+	vmm_art_i <= vmm_art;    
+  
+	 cfg_bit_in_i	<= cfg_bit_in;
+
+     vmm_clk_int <= vmm_clk_int_i;	 
+	
+	 cktp_enable <= cktp_enable_i;
+	 cktp_sync <= cktp_sync_i;
+	 cktp_i <= vmm_cktp;
+     
+     ckbc_enable <= ckbc_enable_i;
+     ckbc_sync <= ckbc_sync_i;
+	 ckbc_i <= vmm_ckbc;
+
+	 cktk_enable <= cktk_enable_i and cktk_enable_2_i;
+	 cktk_sync <= cktk_sync_i;
+	 cktk_i <= vmm_cktk;
+	  
+--	 vmm_clk_token <=vmm_clk_token_i;
+
+	 cfg_bit_out <= cfg_bit_out_i;
+     vmm_data0x <= vmm_data0;
+	 vmm_artx <= vmm_art;
+
+fifo_inst_1 : fifo_generator_0
+  PORT MAP (
+    rst => reset,
+    wr_clk => clk200,
+    rd_clk => clk_ila,
+    din => din,
+    wr_en => fifo_wr_en_i,
+    rd_en => '0',
+    dout => dout,
+    full => open,
+    almost_full => open,
+    empty => open,
+    almost_empty => open,
+    rd_data_count => rd_data_count,
+    wr_data_count => wr_data_count,
+    prog_full => open,
+    prog_empty => open
+  );
+  
+--    vio_inst_1 : vio_0
+--        PORT MAP (
+--           clk => clk_ila,
+--           probe_in0 => probe_in0, 
+--           probe_out0 => probe_out0
+--        );  
+--
+--    probe_in0 <= x"00"; 
+--    vmm_sel <= probe_out0( 2 downto 0);
+--    display_sel <= probe_out0( 3);
+--    open <= probe_out0( 7 downto 4);
+
+
+end rtl;
